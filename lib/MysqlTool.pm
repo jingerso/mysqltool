@@ -1,8 +1,7 @@
 ###############################################################################
 # MysqlTool.pm 
 #
-# Copyright (C) 2001 Dajoba, LLC 
-# http://dajoba.com -- info at dajoba dot com
+# Copyright (C) 2012 Joseph Ingersoll
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -337,12 +336,12 @@ sub display_main {
    print "<table cellpadding=2 cellspacing=2 border=0 width=100%>";
    if( $MysqlTool::mode eq 'MULTI USER' ) {
         print "<tr bgcolor=$MysqlTool::dark_grey><td><table cellpadding=0 cellspacing=0 border=0 width=100%><tr>";
-        print "<td>$MysqlTool::font", "<b><a href=http://dajoba.com/projects/mysqltool/ target=_top>MysqlTool</a></b> v$MysqlTool::VERSION</font></font></td>";
+        print "<td>$MysqlTool::font", "<b><a href=https://github.com/jingerso/mysqltool target=_top>MysqlTool</a></b> v$MysqlTool::VERSION</font></font></td>";
         print "<td align=right>$MysqlTool::font", "<a href=$MysqlTool::start_page?_..logout.._=1 target=_top><b>logout</b></a></font></td>"; 
         print "</tr>";
     } else {
         print "<tr bgcolor=$MysqlTool::dark_grey><td><table cellpadding=0 cellspacing=0 border=0 width=100%><tr>";
-        print "<td>$MysqlTool::font", "<b><a href=http://dajoba.com/projects/mysqltool/ target=_top>MysqlTool</a></b></font></font></td>";
+        print "<td>$MysqlTool::font", "<b><a href=https://github.com/jingerso/mysqltool target=_top>MysqlTool</a></b></font></font></td>";
         print "<td align=right>$MysqlTool::font", "Version $MysqlTool::VERSION</font></td>"; 
         print "</tr>";
     }
@@ -1247,12 +1246,7 @@ For more information about htaccess files, check out the article titled
 
 The MysqlTool project homepage: 
 
-	http://dajoba.com/projects/mysqltool/
-
-The MysqlTool mailing list:
-	
-	mysqltool at lists dot dajoba dot com
-	http://lists.dajoba.com/m/listinfo/mysqltool/
+    https://github.com/jingerso/mysqltool
 
 Mysql documentation:
 
@@ -1276,9 +1270,9 @@ Mysql documentation:
 
 =head1 AUTHROS / ACKNOWLEDGMENTS
 
-MysqlTool was created by Joe Ingersoll <joe at dajoba dot com>.
+MysqlTool was created by Joe Ingersoll <joe.ingersoll at gmail dot com>.
 
-Tweaks, testing and documentation by Abe Ingersoll <abe at dajoba dot com>.
+Tweaks, testing and documentation by Abe Ingersoll <abe at abe dot us>.
 
 Thanks to:
 
@@ -1292,7 +1286,7 @@ Thanks to:
 
 =head1 COPYRIGHT
 
-Copyright 2001 Dajoba, LLC
+Copyright 2012 Joseph Ingersoll
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
