@@ -1,0 +1,17 @@
+If you are upgrading from 0.85 to 0.90 and you want to 
+use the MULTI-USER mode follow these steps.
+
+Step 1: Download and install the Crypt::Blowfish module
+from CPAN. 
+(hint: su root; perl -MCPAN -e shell; install Crypt::Blowfish)
+
+Step 2: backup your existing mysqltool.conf
+
+Step 3: copy mysqltool.conf from the install dir to
+the dir of the old mysqltool.conf
+
+Step 4: run perl Makefile.PL; make; make install
+
+Step 5: restart the webserver
+
+See the pod in Mysqltool.pm for more information.

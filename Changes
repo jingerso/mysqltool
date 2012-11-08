@@ -1,0 +1,80 @@
+version 0.95
+    - outstanding Makefile.PL ("undef $/") bug fixed -gws
+    - maxlength on password input fields removed. -gws
+    - '0' value columns now display as 0, not blank [thanks Tatsuhiko Miyagawa] -gws
+    - dump doesn't uppercase field type or enum values anymore [thanks Tatsuhiko Miyagawa] -gws
+    - new grants are properly quoted -gws
+    - edit/new user links point to anchors -gws
+    - databases with same name but different cases (foo and FOO) show grants correctly -gws
+    - execute SQL statement for tables with a field name starting with "from" now work correctly -gws
+
+
+version 0.94
+    - fixed execute sql statement [execute] [clear] javascript error -ai
+    - added javascript so login window reloads itself into _top -ai
+    - added check for Apache request object in handler. if found,
+      check content type of request so images are displayed properly
+      even if mysqltool is defined as the handler under a <Location /> tag. -ai
+    - added cookie test. if cookies are disabled in user's browser,
+      mysqltool will now complain loudly (only in MULTI USER mode). -ai
+    - added configurable document type charset variable -ji
+    - changed cookie generation so a path is not explicitly defined -ai
+    - fixed 'dbh destroyed without explicit disconnect' problem -ai
+
+version 0.93
+    - fixed bug that was causing newly created tables to be put in the
+      wrong database -ji
+    - added an exception check after loading DBI or Apache::DBI in 
+      mysqltool.conf [thanks Gerrit] -ji
+
+version 0.92
+    - changed form method to POST on the login screen [thanks Konrad Bernlöhr] -ji
+
+version 0.91
+    - added support for limiting connections to a pre-defined list of servers
+      [thanks Eric] -ji
+    - reverted to old syntax for loading DBI or Apache::DBI...the change in .90
+      has been causing problems with mod_perl -ji
+    - the remote ip is now being captured from the %ENV variable rather than the
+      connection object -ji
+
+version 0.90
+    - created (more, modified) mutli user mode to allow independent database user ids
+      and passwords across many different sessions to the same mysqltool
+      installation. One nice side effect is that $MysqlTool::Servers no longer
+      has to be explicitly defined, amoung other features. DB connection
+      info is stored in a Blowfish-encrypted cookie. -ji [thanks Eric Smith]
+    - fixed bug causing warning in error log 'Database handle destroyed
+      without explicit disconnect' -ji
+    - completely rewrote and reorganized MysqlTool.pm's POD. -ai
+    - fixed 'order by' bug caused by improper SQL statement parsing. related
+      bugs were found and also fixed, although the regex's still need 
+      work, or we need a real mysql statement parser. -ai [thanks Bill Gerrard]
+    - when viewing query record sets, 'New Record' link will now
+      only be shown for queries involving one table. -ai
+    - changed links & email address in code/docs to point to dajoba.com
+      rather than the mysqltool.com placeholder. -ai
+    - minor touchup to query output. Every 20th row, a label/heading table
+      was displayed, even at the bottom of the page before the last record. 
+      Also made the number of rows between labels configurable via
+      $MysqlTool::row_header_frequency. -ai
+    - added checks to set default values in critical $MysqlTool:: variables
+      if the variable wasn't properly defined in mysqltool.conf. -ai
+
+version 0.85
+    - added function compare_version for checking mysql version for 
+      support for certain features. -ji
+    - removed dependancy for SQL::Statement. This fixed the problem
+      where some SQL statements weren't being allowed to execute. -ji
+    - In the query frame text was added next to the "limit" text boxes
+      to show that they should be used instead of a limit clause. -ji
+    - added variable $MysqlTool::query_frame_height to make it easier 
+      for users to change the query frame height if it doesn't fit 
+      in their browser. -ji
+    - added check to see if the number of primary key columns equals 
+      the total number of columns and if so don't show edit link. -ji
+    - mysqltool now handles blank root username and password in the
+      %MysqlTool::servers variable -ji [thanks João Pedro Gonçalves]
+
+version 0.80
+    - initial public release -ji
