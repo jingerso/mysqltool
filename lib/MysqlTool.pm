@@ -23,10 +23,18 @@ package MysqlTool;
 
 use strict;
 use Data::Dumper;
+use Apache2::Const;
+use Apache2::Log;
 
 $MysqlTool::VERSION = '0.95';
 
-sub new { bless { 'CGI' => $_[1], 'conn_params' => $_[2] }, $_[0] }
+sub new { bless $_[1], $_[0] }
+
+sub fail {
+    my ($r, $status, $message) = @_;
+    $r->log_error($message, $r->filename);
+    return $status;
+}
 
 sub handler {
     my $r = shift;
@@ -40,19 +48,29 @@ sub handler {
         die "failed to load CGI module -- $@\n";
     }
 
+    if( eval "use Template" ) {
+        die "failed to load Template module -- $@\n";
+    }
+
     #DBI->trace(1);
 
     my $q = CGI->new();
-    my $self = MysqlTool->new($q);
+    my $tt = Template->new({ 
+      INCLUDE_PATH => '/home/joe/mysqltool/lib/templates',
+      #PRE_PROCESS => 'config',
+      OUTPUT => $r
+    });
+
+    my $self = MysqlTool->new({ CGI => $q, TT => $tt, Apache => $r });
 
     $self->set_defaults();
     #$self->load_modules();
    
     if( $self->manage_session() ) {
-        $self->display();
+        return $self->display();
+    } else {
+        return $self->display_login();
     }
-
-    return 0;
 }
 
 sub TODO_load_modules {
@@ -79,7 +97,7 @@ sub display {
     my $q = $self->{'CGI'};
     
     if( $q->param('_.in_nav._') ) {
-        MysqlTool::Nav->new($q, $self->{'conn_params'})->display();
+        MysqlTool::Nav->new($self)->display();
     } elsif( $q->param('_.in_main._') ) {
         $self->display_main();
     } else {
@@ -90,7 +108,7 @@ sub display {
         print '</FRAMESET>';
     }
 
-    1;
+    return $Apache2::Const::OK;
 }
 
 sub servers {
@@ -305,7 +323,7 @@ sub display_main {
     my $database = $q->param('_.db_id._') ? $server->{'databases'}->{ $q->param('_.db_id._') } : {};
 
     my $dbh = $server->{'dbh'};
-    my $query_obj = MysqlTool::Query->new($q, $c);
+    my $query_obj = MysqlTool::Query->new($self);
     
     if( $q->param('_.sql_frames._') ) {
         my $result_src = "$MysqlTool::start_page?_.in_main._=1&_.server_id._=$server->{ID}&_.db_id._=$database->{ID}&_.in_result._=1";
@@ -350,7 +368,7 @@ sub display_main {
     print "</table>";
 
     unless( $q->param('_.server_id._') ) {
-        MysqlTool::Servers->new($q, $c)->display();
+        MysqlTool::Servers->new($self)->display();
         return;
     }
     
@@ -362,7 +380,7 @@ sub display_main {
     print "</table></td></tr></table>";
     
     unless( $q->param('_.db_id._') ) {
-        MysqlTool::Server->new($q, $c)->display();
+        MysqlTool::Server->new($self)->display();
         return;
     }
     
@@ -386,7 +404,7 @@ sub display_main {
     print "</table></td></tr></table>";
     
     if( $q->param('_.in_db._') ) {
-        MysqlTool::Db->new($q, $c)->display($server);
+        MysqlTool::Db->new($self)->display($server);
         return;
     }
 
@@ -411,12 +429,12 @@ sub display_main {
         $query_obj->display_statement_frame($database);
         return;
     } elsif( $q->param('_.generate_scripts._') ) {
-        MysqlTool::Dump->new($q, $c)->display_generate_scripts($server);
+        MysqlTool::Dump->new($self)->display_generate_scripts($server);
         return;
     }
 
     if( $q->param('_.in_table._') ) {
-        MysqlTool::Table->new($q, $c)->display($database);
+        MysqlTool::Table->new($self)->display($database);
         return;
     }
     
@@ -451,7 +469,7 @@ sub display_main {
     print "</table>";
     
     if( $q->param('_.in_field._') ) {
-        MysqlTool::Field->new($q, $c)->display($database);
+        MysqlTool::Field->new($self)->display($database);
         return;
     }
 
@@ -833,7 +851,7 @@ sub manage_session {
         $message = "You aren't logged in or your session has expired.";
     }
     
-    $self->display_login($message);
+    $self->{login_message} = $message;
 
     return 0;
 }
@@ -870,9 +888,12 @@ sub send_session_cookie {
 
 sub display_login {
     my $self = shift;
-    my $message = shift;
+    my $message = $self->{login_message};
 
     my $q = $self->{'CGI'};
+    my $r = $self->{'Apache'};
+    my $tt = $self->{'TT'};
+
     my $cookie = $q->cookie( -name => 'mysqltool', -value => '', -expires => '-1d');
     my $cookie_test = $q->cookie( -name => 'mysqltool_cookie_test', -value=> '1', -expires => '+30d');
     
@@ -882,65 +903,20 @@ sub display_login {
           $q->start_html(-title => $MysqlTool::title, -bgcolor => 'white', 
                          -link => $MysqlTool::dark_color, -alink => $MysqlTool::dark_color, 
                          -vlink => $MysqlTool::dark_color,
-                         -script => { -language=>'JAVASCRIPT', -code=>$javascript }),
-          $q->startform( -method => 'POST', -action => $MysqlTool::start_page, -target => '_top');
+                         -script => { -language=>'JAVASCRIPT', -code=>$javascript },
+                         -style=> { src => 'bootstrap/css/bootstrap.css' }),
+          $q->startform( -method => 'POST', -action => $MysqlTool::start_page, -target => '_top', -class => 'form-horizontal');
 
-    my %login_params = ('_db_user_' => 1, '_db_pass_' => 1, '_server_' => 1, '_port_' => 1, '_db_' => 1, '_login_' => 1, '_logout_' => 1 );
+    my $stash = { 
+      cgi => $q, 
+      message => $message, 
+      VERSION => $MysqlTool::VERSION,
+      allowed_server_values =>  [ keys %MysqlTool::allowed_servers ],
+      allowed_server_labels => { map { $_, "$_:$MysqlTool::allowed_servers{$_}" } keys %MysqlTool::allowed_servers }
+    };
 
-    foreach( $q->param ) {
-        next if $login_params{$_};
-        #print $q->hidden( -name => $_, -value => $q->param($_), -override => 1 );
-    }
-    
-    print "<table width=100% height=100%>\n";
-    print "<tr><td valign=middle align=center>";
-    print "<table cellpadding=2 cellspacing=2 border=0 width=60%>\n";
-    print "<tr bgcolor=$MysqlTool::light_grey><td colspan=2 align=center>", $MysqlTool::font, "<font color=$MysqlTool::dark_color size=+2><B>$MysqlTool::title</B> v$MysqlTool::VERSION</font></font></td></tr>";
-    
-    if( $message ) {
-        print "<tr><td colspan=2 align=center>$MysqlTool::font<font color=red><B>", $message, "</B></font></font></td></tr>\n";
-    }
-    
-    print "<tr bgcolor=$MysqlTool::dark_grey><td colspan=2>$MysqlTool::font";
-    print "Enter the connection paramaters for the mysql server you want to connect to. ";
-    print "This data will be encrypted using the <a href=http://cpan.org/modules/by-module/Crypt/>Blowfish</a> algorithm and stored in a cookie that will expire after 20 minutes of inactivity.";
-    print "</font></td></tr>";
-    print "<tr bgcolor=$MysqlTool::light_grey>";
-    print "<td align=right nowrap>", $MysqlTool::font, "UserName: </font></td>";
-    print "<td width=100%>", $q->textfield( -name => '_..db_user.._', -size => 10, -default => 'root'), "</td>";
-    print "</tr>\n";
-    print "<tr bgcolor=$MysqlTool::light_grey>";
-    print "<td align=right>", $MysqlTool::font, "Password: </font></td>";
-    print "<td>", $q->password_field( -name => '_..db_pass.._', -size => 10), "</td>";
-    print "</tr>\n";
-    print "<tr bgcolor=$MysqlTool::light_grey>";
-    print "<td align=right nowrap>", $MysqlTool::font, "User has database scope privileges (root): </font></td>";
-    print "<td>", $q->checkbox( -name => '_..is_admin.._', -value => 1, -label => '', -checked => 1), "</td>";
-    print "</tr>\n";
+    $tt->process('login.tt', $stash) || return fail($r, $Apache2::Const::SERVER_ERROR, $tt->error());
 
-    if( %MysqlTool::allowed_servers ) {
-        print "<tr bgcolor=$MysqlTool::light_grey>";
-        print "<td align=right>", $MysqlTool::font, "Server: </font></td>";
-        print "<td>", $q->popup_menu( -name => '_..server.._', -values => [ keys %MysqlTool::allowed_servers ], -labels => { map { $_, "$_:$MysqlTool::allowed_servers{$_}" } keys %MysqlTool::allowed_servers }), "</td>";
-        print "</tr>\n";
-    } else {
-        print "<tr bgcolor=$MysqlTool::light_grey>";
-        print "<td align=right>", $MysqlTool::font, "Server: </font></td>";
-        print "<td>", $q->textfield( -name => '_..server.._', -size => 20, -default => 'localhost'), "</td>";
-        print "</tr>\n";
-        print "<tr bgcolor=$MysqlTool::light_grey>";
-        print "<td align=right>", $MysqlTool::font, "Port: </font></td>";
-        print "<td>", $q->textfield( -name => '_..port.._', -size => 4, -default => '3306'), "</td>";
-        print "</tr>\n";
-    }
-
-    print "<tr bgcolor=$MysqlTool::light_grey>";
-    print "<td align=right>", $MysqlTool::font, "Database:<BR>(required if user doesn't have server scope privileges)</font></td>";
-    print "<td>", $q->textfield( -name => '_..db.._', -size => 20), "</td>";
-    print "</tr>\n";
-    print "<tr bgcolor=$MysqlTool::dark_grey><td colspan=2 align=center>$MysqlTool::font", $q->submit( -name => '_..connect.._', -value => 'Connect' ), "</font></td></tr>";
-    
-    print "</table></td></tr></table>";
     print $q->endform . $q->end_html;
 
     return 0;

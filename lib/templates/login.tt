@@ -1,0 +1,63 @@
+<div class='container'> 
+  <div class='row'>
+    <div class='span12'>
+      <h1>MysqlTool v[% VERSION %]</h1>
+    </div>
+  </div>
+    
+  <div class="row">
+    <div class="span12">
+      <div class='well'>
+        <p>
+          Enter the connection paramaters for the mysql server you want to connect to.
+          This data will be encrypted using the <a href=http://cpan.org/modules/by-module/Crypt/>Blowfish</a> algorithm and stored in a cookie that will expire after 20 minutes of inactivity.
+        </p>
+        [% IF message %]
+          <div class='alert alert-error'>[% message %]</div>
+        [% END %]
+        <div class='control-group'>
+          <label class='control-label' for='_..db_user.._'>UserName</label>
+          <div class='controls'>[% cgi.textfield( name => '_..db_user.._', size => 10, default => 'root') %]</div>
+        </div>
+
+        <div class='control-group'>
+          <label class='control-label' for='_..db_user.._'>Password</label>
+          <div class='controls'>[% cgi.password_field( name => '_..db_pass.._', size => 10) %]</div>
+        </div>
+
+        <div class='control-group'>
+          <div class='controls'>[% cgi.checkbox( style => 'margin: 0', name => '_..is_admin.._', value => 1, label => ' User has database scope privileges (root)', checked => 1) %]</div>
+        </div>
+        
+        [% IF allowed_server_values.length %]
+          <div class='control-group'>
+            <label class='control-label' for='_..server.._'>Server</label>
+            <div class='controls'>[% cgi.popup_menu( name => '_..server.._', values => allowed_server_values, labels => allowed_server_labels ) %]</div>
+          </div>
+  
+        [% ELSE %]
+          <div class='control-group'>
+            <label class='control-label' for='_..server.._'>Server</label>
+            <div class='controls'>[% cgi.textfield( name => '_..server.._', size => 10, default => 'localhost') %]</div>
+          </div>
+
+          <div class='control-group'>
+            <label class='control-label' for='_..port.._'>Port</label>
+            <div class='controls'>[% cgi.textfield( name => '_..port.._', size => 10, default => '3306') %]</div>
+          </div>
+        [% END %]
+
+        <div class='control-group'>
+          <label class='control-label' for='_..db.._'>Database</label>
+          <div class='controls'>
+            [% cgi.textfield( name => '_..db.._', size => 10, default => '') %]
+            <span class="help-block">(required if user doesn't have server scope privileges)</span>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          [% cgi.submit( name => '_..connect.._', value => 'Connect', class => 'btn btn-primary' ) %]
+        </div>
+      </div>
+    </div>
+  </div>

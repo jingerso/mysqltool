@@ -2,7 +2,7 @@
 
 use strict;
 
-require '/usr/local/apache/conf/mysqltool.conf';
+require '/home/joe/mysqltool/htdocs/mysqltool.conf';
 
 &MysqlTool::handler;
 
